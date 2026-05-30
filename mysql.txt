@@ -1,0 +1,31 @@
+Steps to create new RDS user and provide the access to pods for that user
+
+1] firstly login into the rds database using below command and default user you created while creating the database
+
+> kubectl run mysql-client --rm -it --image=mysql:8.0 --restart=Never -- mysql -h catalog-mysql -u mydbadmin -p
+
+2] then create new mysql user with new password and grant the permission for rds_superuser_role below are the MySQL commands to do so
+
+# lists all the users in the database
+mysql> SELECT user, host FROM mysql.user;  
+
+# it will give the table with the status of all users having below privileges
+mysql> SELECT user, host, Super_priv, Create_priv, Drop_priv, Grant_priv, Alter_priv, Insert_priv, Update_priv, Delete_priv, Select_priv FROM mysql.user;  
+
+# to create new user
+mysql> CREATE USER 'mysqluser'@'%' IDENTIFIED BY 'catalog123';  (CREATE USER '<user-name>'@'%' IDENTIFIED BY '<password>')
+
+# Grant rds_superuser_role (same as mydbadmin)
+mysql> GRANT rds_superuser_role TO 'mysqluser'@'%';
+
+# Critical step to set the role as default
+mysql> SET DEFAULT ROLE ALL TO 'mysqluser'@'%';
+
+# validate if 'activate_all_roles_on_login' is ON or OFF
+mysql> SHOW VARIABLES LIKE 'activate_all_roles_on_login';
+
+# Verify grants match mydbadmin
+mysql> SHOW GRANTS FOR 'mysqluser'@'%';
+
+
+3] Final step, create the new secret manager in aws and pass the name to secret provider class as an object name

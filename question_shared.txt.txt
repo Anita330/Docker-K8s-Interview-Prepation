@@ -1,0 +1,152 @@
+Questions we discussed today
+ 
+---
+ 
+## Section 08-01: Kubernetes Pods
+ 
+---
+ 
+### Q1. A Pod is the smallest deployable unit. But internally, every Pod actually runs a hidden container before your app container. What is it, and what role does it play?
+ 
+**Answer:**
+ 
+Every Pod runs a **pause container** (also called the "infra container" or `k8s.gcr.io/pause`).
+ 
+It is started first and its sole job is to:
+- **Hold the network namespace** for the Pod (the Linux `netns`).
+- Assign the Pod's IP address.
+- Keep the namespace alive even if application containers restart.
+ 
+All other containers in the Pod **join** this pause container's network namespace, which is why they share the same IP and `localhost`. If the pause container dies, the entire Pod is torn down and rescheduled.
+ 
+---
+ 
+### Q2. Explain Pod QoS classes. How does Kubernetes assign them and what are the eviction implications?
+ 
+**Answer:**
+ 
+Kubernetes assigns one of three QoS classes based on resource declarations:
+ 
+| QoS Class | Condition | Eviction Priority |
+|-----------|-----------|-------------------|
+| **Guaranteed** | Every container has `requests == limits` for both CPU and memory | Last to be evicted |
+| **Burstable** | At least one container has `requests < limits` or only one is set | Evicted after BestEffort |
+| **BestEffort** | No `requests` or `limits` defined on any container | First to be evicted |
+ 
+**In the course manifest:**
+```yaml
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "250m"
+    memory: "256Mi"
+```
+This is **Burstable** because `requests != limits`.
+ 
+**Eviction:** Under memory pressure, the kubelet evicts BestEffort first, then Burstable (ordered by how much they exceed their requests), and Guaranteed last. This directly impacts production reliability — always use Guaranteed QoS for critical workloads.
+ 
+---
+ 
+### Q3. What are the Pod lifecycle phases? What does `Running` actually guarantee?
+ 
+**Answer:**
+ 
+| Phase | Meaning |
+|-------|---------|
+| `Pending` | Pod accepted by the API server; scheduler hasn't assigned a node yet, or images are being pulled |
+| `Running` | Pod bound to a node; at least one container is running, starting, or restarting |
+| `Succeeded` | All containers exited with code 0 (Jobs/batch workloads) |
+| `Failed` | All containers have stopped; at least one exited with non-zero code |
+| `Unknown` | Node communication lost; kubelet can't report state |
+ 
+**Critical nuance:** `Running` does **not** mean the app is healthy. A Pod can be in `Running` phase while its Readiness Probe is failing (meaning it is excluded from Service endpoints). Always check `READY` column (`1/1`) not just `STATUS`.
+ 
+---
+ 
+### Q4. What is the difference between `readinessProbe`, `livenessProbe`, and `startupProbe`? When would you use each?
+ 
+**Answer:**
+ 
+| Probe | Question It Answers | Failure Action | Use Case |
+|-------|---------------------|----------------|----------|
+| **readinessProbe** | "Is the container ready to serve traffic?" | Remove Pod from Service endpoints | App has a warm-up period; DB connections need to establish |
+| **livenessProbe** | "Is the container still alive?" | Restart the container | Detect deadlocks, hung threads, memory leaks that freeze the app |
+| **startupProbe** | "Has the container finished starting?" | Restart the container (until `failureThreshold` exceeded) | Slow-starting legacy apps; prevents liveness from killing app before it boots |
+ 
+**Key interaction:** `startupProbe` disables `livenessProbe` and `readinessProbe` until it succeeds. This prevents premature restarts during slow startup.
+ 
+**From the course manifest:** Only `readinessProbe` is defined on the Pod. Adding `livenessProbe` (done in 08-02) adds self-healing behavior.
+ 
+---
+ 
+### Q5. What happens at the OS/kernel level when `kubectl exec -it catalog-pod -- sh` is executed?
+ 
+**Answer:**
+ 
+1. `kubectl` sends a `POST` request to the API server: `POST /api/v1/namespaces/default/pods/catalog-pod/exec`.
+2. The API server upgrades the connection to a **WebSocket or SPDY** stream.
+3. The API server communicates with the **kubelet** on the target node via its HTTPS endpoint.
+4. The kubelet calls the **Container Runtime Interface (CRI)** (e.g., containerd).
+5. containerd uses the `exec` syscall to run `sh` inside the container's existing **Linux namespaces** (PID, mount, network, UTS, IPC).
+6. A new process is created that **joins** the existing container namespaces — it is not a new container.
+7. Stdin/stdout are streamed back through the kubelet → API server → `kubectl`.
+ 
+**Security implication:** This requires RBAC verb `exec` on `pods`. In production, restrict this — it grants essentially root-level access to the container.
+ 
+---
+ 
+### Q6. What are Init Containers? How do they differ from sidecar containers, and when would you use them in production?
+ 
+**Answer:**
+ 
+**Init Containers** run to completion **before** any app container starts. They run sequentially, one after another.
+ 
+**Differences from app/sidecar containers:**
+ 
+| Aspect | Init Container | App/Sidecar Container |
+|--------|---------------|----------------------|
+| Lifecycle | Runs once, must complete successfully | Runs for the life of the Pod |
+| Restart | Restarts until success (per `restartPolicy`) | Restarts per container restart policy |
+| Resource accounting | Counted separately for scheduling | Added to total Pod resource request |
+| Probes | No readiness/liveness probes | Supports all probes |
+ 
+**Production use cases:**
+- Wait for a database to be available before starting the app (`nslookup db-service`)
+- Pre-populate a shared `emptyDir` volume with config files
+- Run DB schema migrations before the app container starts
+- Clone a git repo into a shared volume
+ 
+```yaml
+initContainers:
+  - name: wait-for-db
+    image: busybox
+    command: ['sh', '-c', 'until nslookup mysql-service; do sleep 2; done']
+```
+ 
+---
+ 
+## Section 08-02: Kubernetes Deployments
+ 
+---
+ 
+### Q7. A Deployment creates a ReplicaSet, which creates Pods. Why does Kubernetes use this two-level hierarchy instead of Deployments directly managing Pods?
+ 
+**Answer:**
+ 
+The separation enables **versioned rollouts and rollbacks**:
+ 
+- Each time you update a Deployment (e.g., change image), Kubernetes creates a **new ReplicaSet** for the new version while scaling down the old one.
+- Old ReplicaSets are retained (controlled by `revisionHistoryLimit`, default: 10) to enable rollback.
+- Rolling back simply means **scaling up the old ReplicaSet** and scaling down the new one.
+ 
+```
+Deployment (desired state owner)
+  ├── ReplicaSet v1 (replicas: 0) ← kept for rollback
+  └── ReplicaSet v2 (replicas: 3) ← current
+```
+ 
+If Deployments managed Pods directly, there would be no clean "snapshot" to roll back to — you'd have to reconstruct the old Pod template manually.
+ 
+---

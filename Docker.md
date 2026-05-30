@@ -396,3 +396,42 @@ Running Application
 ```
 
 Docker provides lightweight, portable, and efficient application deployment compared to traditional virtual machines.
+
+
+| Type        | Address/Format                                    | Platform                                    |
+| ----------- | ------------------------------------------------- | ------------------------------------------- |
+| Unix socket | unix:///var/run/docker.sock                       | Linux, Mac, Unix (default) stackoverflow+1  |
+| TCP socket  | tcp://host:port (e.g., tcp://192.168.99.101:2376) | Remote hosts, Mac/Windows VMs stackoverflow |
+| Named pipe  | npipe:////./pipe/docker_engine                    | Windows datacadamia                         |
+
+How can a Docker container access the internet by default?
+
+Answer:
+Docker creates a bridge network (docker0) and configures NAT rules using iptables. Containers receive private IP addresses (such as 172.17.0.x). When a container sends traffic to the internet, Docker translates the container IP to the host's IP address and forwards the traffic. The response is translated back and delivered to the container. This allows outbound internet access without assigning a public IP to each container.
+
+# Host IP
+Host IP is the IP address assigned to the physical machine, virtual machine, or EC2 instance that runs Docker containers. Containers typically have their own private IPs, but when they communicate with external networks, Docker uses NAT so that outbound traffic appears to originate from the host IP.
+
+Multistage build flow
+Stage 1
+--------------------
+Source Code
+      |
+      v
+Maven Build
+      |
+      v
+app.jar
+      |
+      |
+COPY --from
+      |
+      v
+
+Stage 2
+--------------------
+JRE
+ +
+app.jar
+
+Final Image

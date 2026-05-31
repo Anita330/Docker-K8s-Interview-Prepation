@@ -450,3 +450,17 @@ spec:
 ```
 
 ### Pod Naming Pattern
+
+# 8. Quick Comparison Table
+
+| Resource | Stateful? | Pod Identity | Scaling | Best For |
+|----------|-----------|--------------|---------|----------|
+| **Deployment** | No | Random | Manual/HPA | Stateless apps |
+| **DaemonSet** | No | One per node | Auto (by nodes) | Node-level agents |
+| **StatefulSet** | Yes | Stable, ordered | Manual | Databases, distributed systems |
+| **ReplicaSet** | No | Random | Manual | Managed by Deployment |
+| **Job** | No | Random | Fixed completions | One-time batch tasks |
+| **CronJob** | No | Random | Scheduled | Recurring batch tasks |
+| **Service** | N/A | N/A | N/A | Network access to pods |
+
+---

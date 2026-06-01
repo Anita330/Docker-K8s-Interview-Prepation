@@ -8,15 +8,15 @@ ensure strong consistency). The controller is notified via the watch stream, com
 with the current state, and reconciles them. This level-triggered logic ensures that even if a signal is
 missed, the next reconciliation loop corrects the state.
 
-2. Explain Kubernetes scheduler workflow step-by-step.  
-The scheduling process moves a Pod from 'Pending' to 'Running' on a node:
-1. **Informer:** The scheduler watches for Pods with no `nodeName` set.
-2. **Scheduling Queue:** These pods are placed in an internal queue.
-3. **Filtering (Predicates):** The scheduler filters out nodes that don't meet hard requirements (e.g.,
+2. Explain Kubernetes scheduler workflow step-by-step?  
+Ans:- The scheduling process moves a Pod from 'Pending' to 'Running' on a node:
+ A. **Informer:** The scheduler watches for Pods with no `nodeName` set.
+B. **Scheduling Queue:** These pods are placed in an internal queue.
+C. **Filtering (Predicates):** The scheduler filters out nodes that don't meet hard requirements (e.g.,
 insufficient CPU/RAM, taints, node selector mismatches).
-4. **Scoring (Priorities):** Remaining nodes are ranked based on 'soft' rules (e.g., spreading pods
+D. **Scoring (Priorities):** Remaining nodes are ranked based on 'soft' rules (e.g., spreading pods
 across zones, affinity preferences, image locality).
-5. **Binding:** The scheduler selects the node with the highest score and sends a `Bind` object to the
+E. **Binding:** The scheduler selects the node with the highest score and sends a `Bind` object to the
 API server, setting the Pod's `nodeName`. The Kubelet on that node then sees the assignment and
 starts the pod.
 
@@ -30,7 +30,7 @@ making rule lookups and updates O(1) (constant time). It supports more sophistic
 algorithms (e.g., Least Connection, Round Robin, Weighted) and performs significantly better at scale.
 
 
-4. How does Kubernetes implement self-healing at pod and node level?
+4. How does Kubernetes implement self-healing at pod and node level?  
 Ans:-
 **Pod Level:** Self-healing is handled by the **Kubelet** (via Liveness/Readiness probes) and
 **Controllers** (ReplicaSet). If a container crashes, the Kubelet restarts it based on the `restartPolicy`.
@@ -40,7 +40,7 @@ sending heartbeats (status `Unknown`), the controller waits for a `pod-eviction-
 the node doesn't return, the controller marks the pods on that node for deletion, prompting the
 ReplicaSet/Deployment to reschedule new replicas on healthy nodes.
 
-5. What happens internally when a pod is deleted?
+5. What happens internally when a pod is deleted?   
 Ans:- 
 1. User sends delete command.
 2. API Server marks the pod as `Terminating` and sets a `deletionTimestamp`.
@@ -53,7 +53,7 @@ forcefully stop the process.
 6. The Pod is removed from etcd.
 
 
-6. How does HPA calculate metrics and make scaling decisions?
+6. How does HPA calculate metrics and make scaling decisions?  
 Ans:- The Horizontal Pod Autoscaler controller runs a control loop (default 15s). It queries the Metrics Server
 (or custom metrics API) for resource usage. The scaling formula is:
 TargetReplicas = ceil[ CurrentReplicas * ( CurrentMetricValue / DesiredMetricValue ) ]
@@ -61,7 +61,7 @@ For example, if you have 2 pods with 50% CPU usage and the target is 25%, the ca
 (50 / 25) ] = 4` pods.
 
 
-7. Difference between HPA, VPA, and Cluster Autoscaler — when to use each?
+7. Difference between HPA, VPA, and Cluster Autoscaler — when to use each?  
 Ans:-
 **HPA (Horizontal Pod Autoscaler):** Scales the *number* of replicas. Use for stateless applications
 with fluctuating traffic patterns (e.g., web servers).
@@ -71,7 +71,7 @@ VPA usually restarts pods to apply changes.*
 **Cluster Autoscaler (CA):** Scales the *number of nodes* in the cluster. It triggers when pods are in a
 'Pending' state due to insufficient cluster resources. Use in cloud environments to optimize costs.
 
-8. How does Kubernetes networking work across nodes (CNI flow)?
+8. How does Kubernetes networking work across nodes (CNI flow)?  
 Ans:-
 Kubernetes requires a flat network where every pod can talk to every other pod without NAT. This is
 implemented by a **CNI (Container Network Interface)** plugin (e.g., Calico, Flannel).
@@ -82,7 +82,7 @@ other on the host.
 4. For cross-node communication, the plugin uses either an **Overlay Network** (encapsulating
 packets in VXLAN/IP-in-IP) or **Direct Routing** (BGP) to route packets between nodes.
 
-9. Explain Pod networking vs Service networking.
+9. Explain Pod networking vs Service networking? 
 Ans:-**Pod Networking:** Every pod gets a unique, ephemeral IP address. Pods communicate directly via
 these IPs. However, because pods are volatile (they die and change IPs), this is unreliable for
 long-term communication.
@@ -91,7 +91,7 @@ abstraction over a set of Pods. The ClusterIP does not exist on any network inte
 defined in **iptables/IPVS** on every node. When traffic hits the ClusterIP, the node's kernel NATs the
 request to one of the backend Pod IPs.
 
-10. How does Ingress differ from Service LoadBalancer internally?
+10. How does Ingress differ from Service LoadBalancer internally?  
 Ans:- **Service LoadBalancer (L4):** Asks the Cloud Provider (AWS/GCP/Azure) to provision a
 physical/virtual Load Balancer (ELB/NLB). It operates at Layer 4 (TCP/UDP), forwarding traffic directly
 to NodePorts. It is expensive (one LB per service) and unaware of HTTP paths.
@@ -100,7 +100,7 @@ Nginx or Traefik). The controller is essentially a reverse proxy running inside 
 Layer 7 (HTTP/HTTPS), allowing host-based (`foo.com`) and path-based (`/api`, `/web`) routing to
 multiple internal Services using a single external IP.
 
-11. What is etcd quorum and how does it impact cluster availability?
+11. What is etcd quorum and how does it impact cluster availability?  
 Ans:-
 Etcd is a distributed key-value store that uses the **Raft** consensus algorithm. Quorum is the majority
 of nodes required to agree on updates (`(N/2) + 1`).
@@ -109,7 +109,7 @@ If you have 3 nodes, quorum is 2. You can tolerate 1 failure. If you lose quorum
 changes can be made until quorum is restored.
 
 
-12. How does Kubernetes handle leader election?
+12. How does Kubernetes handle leader election?  
 Ans:-
 Kubernetes components (Scheduler, Controller Manager) use **Leader Election** to ensure high
 availability without conflict. They use a **Lease** object (in the `coordination.k8s.io` API group) as a
@@ -119,7 +119,7 @@ active leader periodically renews the lease. If the leader fails to renew within
 another candidate acquires the lock and becomes the new leader. This relies on Optimistic Locking
 (ResourceVersions) in the API Server.
 
-13. How do rolling updates work internally in Deployments?
+13. How do rolling updates work internally in Deployments?  
 Ans:- A Deployment manages updates by creating a new **ReplicaSet** while scaling down the old one. This
 is controlled by two parameters:
 **maxSurge:** How many pods can be created *above* the desired count (e.g., creating new versions
@@ -128,7 +128,7 @@ before deleting old ones).
 The Deployment Controller iteratively scales up the new ReplicaSet and scales down the old
 ReplicaSet until the new version reaches the desired count and the old one reaches 0.
 
-14. What are PodDisruptionBudgets and real-world use cases?
+14. What are PodDisruptionBudgets and real-world use cases?  
 Ans:- 
 A **PodDisruptionBudget (PDB)** limits the number of pods that can be down simultaneously due to
 *voluntary* disruptions (e.g., node draining for maintenance, cluster upgrades).
@@ -137,7 +137,7 @@ a PDB with `minAvailable: 2`. If an admin tries to drain a node containing one o
 Kubernetes will block the drain action if it would violate the PDB (i.e., if another replica is already
 down).
 
-15. How does Kubernetes handle node failures and rescheduling?
+15. How does Kubernetes handle node failures and rescheduling?  
 Ans:- 
 1. The **Node Controller** stops receiving heartbeats from a node.
 2. It changes the node `Condition` to `Unknown` or `NotReady`.
@@ -149,7 +149,7 @@ Server.
 6. The **Scheduler** assigns these new Pods to healthy nodes.
 
 
-16. What are admission controllers and why are they critical for security?
+16. What are admission controllers and why are they critical for security?  
 Ans:-
 Admission Controllers are plugins that intercept API requests *after* authentication/authorization but
 *before* the object is persisted to etcd.
@@ -161,7 +161,7 @@ enforcing unique ingress hosts).
 They are critical for enforcing security policies (Pod Security Standards) and governance across the
 cluster.
 
-17. How does RBAC evaluation happen during API requests?
+17. How does RBAC evaluation happen during API requests?  
 Ans:- When a request hits the API Server, the RBAC Authorizer checks:
 **Subject:** Who is making the request? (User, Group, ServiceAccount)
 **Verb:** What action? (get, list, watch, create, update, delete)
@@ -171,7 +171,7 @@ It evaluates all **RoleBindings** and **ClusterRoleBindings** associated with th
 binding allows the action, the request is approved. RBAC is 'deny-by-default'—if no rule explicitly allows
 it, it is denied.
 
-18. What is the difference between Secrets encryption at rest vs in transit?
+18. What is the difference between Secrets encryption at rest vs in transit?  
 Ans:- **In Transit:** Kubernetes uses **TLS** (HTTPS) for all communication between the User (kubectl), the
 API Server, the Kubelet, and Etcd. This protects data as it travels over the network.
 **At Rest:** By default, Secrets are stored as base64-encoded plain text in Etcd. To enable encryption
@@ -180,7 +180,7 @@ at rest, you must configure an **EncryptionConfiguration** in the API Server. Th
 etcd disk is stolen, the secrets are unreadable.
 
 
-19. How do taints & tolerations differ from node affinity?
+19. How do taints & tolerations differ from node affinity?  
 Ans:- 
 **Taints/Tolerations:** Used to *repel* pods from nodes. A node with a Taint will refuse to schedule any
 pod that does not have a matching Toleration. (Use case: Dedicated nodes for GPU workloads,
@@ -189,7 +189,7 @@ preventing general pods from landing there).
 *requires* to run on nodes with specific labels. (Use case: Scheduling pods in a specific availability
 zone).
 
-20. How does Kubernetes DNS work internally?
+20. How does Kubernetes DNS work internally?  
 Ans:-
 Kubernetes runs a DNS server (usually **CoreDNS**) as a Deployment/Service. It watches the API
 Server for new Services and Pods.
@@ -199,7 +199,7 @@ Kubelet configures every Pod's `/etc/resolv.conf` with the CoreDNS Service IP an
 (e.g., `default.svc.cluster.local`, `svc.cluster.local`). This allows pods to resolve services by short
 names.
 
-21. How does kubelet communicate with the container runtime (CRI)?
+21. How does kubelet communicate with the container runtime (CRI)?  
 Ans:- The Kubelet does not speak directly to Docker or containerd. It uses the **CRI (Container Runtime
 Interface)**.
 CRI is a plugin interface based on **gRPC**. The Kubelet acts as a gRPC client and calls the Container
@@ -207,7 +207,7 @@ Runtime (the gRPC server) to perform operations like `CreateContainer`, `StartCo
 `StopContainer`. The runtime (e.g., containerd via a CRI shim) then interacts with the kernel (via
 runc/OCI) to manage the containers.
 
-22. What are static pods and when are they used?
+22. What are static pods and when are they used?  
 Ans:-Static Pods are managed directly by the **Kubelet** on a specific node, bypassing the API Server and
 Scheduler. They are defined by placing YAML manifest files in a specific directory on the node (usually
 `/etc/kubernetes/manifests`).
@@ -215,14 +215,14 @@ Scheduler. They are defined by placing YAML manifest files in a specific directo
 Scheduler usually run as static pods on the Master nodes because they need to start *before* the
 cluster control plane is functional.
 
-23. How does Kubernetes garbage collection work?
+23. How does Kubernetes garbage collection work?  
 Ans:-Kubernetes GC cleans up unused resources (like terminated pods, unused images, or orphaned
 objects). It relies heavily on **OwnerReferences**.
 **Cascading Deletion:** When you delete a parent object (like a Deployment), the GC sees that the
 child objects (ReplicaSets) have an `ownerReference` to it. Depending on the deletion strategy
 (`Foreground`, `Background`, or `Orphan`), the GC deletes the dependents automatically.
 
-24. What happens when a container exceeds memory limits?
+24. What happens when a container exceeds memory limits?  
 Ans:-If a container tries to consume more RAM than its defined `limit`, the Linux Kernel's **OOM (Out of
 Memory) Killer** intervenes.
 
@@ -231,7 +231,7 @@ exiting with **Exit Code 137** (128 + 9 for SIGKILL). The Kubelet sees this term
 container (if the `restartPolicy` allows), often leading to a `CrashLoopBackOff` if the memory issue
 persists.
 
-25. How do you design a highly available Kubernetes control plane?
+25. How do you design a highly available Kubernetes control plane?  
 Ans:-To achieve HA, you need to eliminate single points of failure:
 1. **Multiple Control Plane Nodes:** Run at least 3 control plane nodes (distributed across Availability
 Zones).

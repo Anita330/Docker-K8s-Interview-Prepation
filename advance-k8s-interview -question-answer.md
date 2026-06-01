@@ -1,5 +1,5 @@
 1. How does Kubernetes control plane ensure consistency across etcd, API
-Server, and controllers?
+Server, and controllers?  
 Ans:- The API Server acts as the central hub and the only component that talks directly to etcd. Consistency
 is maintained through the **List and Watch** mechanism. Controllers (like the ReplicationManager)
 watch the API Server for changes to the desired state. When a change occurs (e.g., a user updates a
@@ -8,7 +8,7 @@ ensure strong consistency). The controller is notified via the watch stream, com
 with the current state, and reconciles them. This level-triggered logic ensures that even if a signal is
 missed, the next reconciliation loop corrects the state.
 
-2. Explain Kubernetes scheduler workflow step-by-step.
+2. Explain Kubernetes scheduler workflow step-by-step.  
 The scheduling process moves a Pod from 'Pending' to 'Running' on a node:
 1. **Informer:** The scheduler watches for Pods with no `nodeName` set.
 2. **Scheduling Queue:** These pods are placed in an internal queue.
@@ -20,7 +20,7 @@ across zones, affinity preferences, image locality).
 API server, setting the Pod's `nodeName`. The Kubelet on that node then sees the assignment and
 starts the pod.
 
-3. How does kube-proxy work internally in iptables vs IPVS mode?
+3. How does kube-proxy work internally in iptables vs IPVS mode?  
 Ans:- **iptables mode:** Kube-proxy watches for Service and Endpoint updates and creates individual
 iptables rules for each service backend. Traffic is load-balanced using a random probability model.
 *Drawback:* Rule updates are O(N) (linear). With thousands of services, updating rules becomes CPU

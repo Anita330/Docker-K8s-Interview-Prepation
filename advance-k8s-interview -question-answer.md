@@ -180,8 +180,8 @@ at rest, you must configure an **EncryptionConfiguration** in the API Server. Th
 etcd disk is stolen, the secrets are unreadable.
 
 
-19. How do taints & tolerations differ from node affinity?  
-Ans:- 
+19. How do taints & tolerations differ from node affinity?     
+Ans:-    
 **Taints/Tolerations:** Used to *repel* pods from nodes. A node with a Taint will refuse to schedule any
 pod that does not have a matching Toleration. (Use case: Dedicated nodes for GPU workloads,
 preventing general pods from landing there).

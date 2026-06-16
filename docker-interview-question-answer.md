@@ -165,3 +165,12 @@ Use versioned tags such as `1.0.0` or commit-based tags instead of relying only 
 
 ### 50. Why is Docker useful in DevOps?
 Docker makes applications portable, repeatable, and easier to build, test, and deploy across environments.
+
+# What is an air-gapped environment in Docker?
+
+An air-gapped Docker environment is a completely isolated environment without internet access. Since Docker cannot pull images from public registries, images are downloaded on a connected machine, exported using docker save, transferred securely, and imported using docker load. Organizations often use private registries to manage container images in air-gapped environments while maintaining security and compliance.
+
+![alt text](image-10.png)
+
+Cache invalidation for RUN instructions
+The cache for RUN instructions isn't invalidated automatically during the next build. The cache for an instruction like RUN apt-get dist-upgrade -y will be reused during the next build. The cache for RUN instructions can be invalidated by using the --no-cache flag, for example docker build --no-cache.

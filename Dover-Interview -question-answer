@@ -1,0 +1,636 @@
+Dover Interview Question & Answer
+Which AWS services have you worked with, and in what capacity?
+Answer:
+I have around 6 years of experience working with AWS in DevOps and CloudOps environments.
+I have primarily worked with EC2, S3, IAM, VPC, RDS, Lambda, CloudWatch, CloudFormation, EventBridge, SNS, Security Hub, GuardDuty, Inspector, Macie, ECR, ECS/EKS, ALB/NLB, and AWS Organizations.
+My responsibilities included:
+Provisioning and managing AWS infrastructure.
+EC2 administration, patching, monitoring, and troubleshooting.
+S3 security and access management.
+IAM roles, policies, and least-privilege access.
+RDS monitoring, backup, and troubleshooting.
+CloudWatch monitoring, logs, metrics, and alarms.
+Lambda-based automation.
+EventBridge for event-driven automation.
+SNS for notifications.
+Security Hub and GuardDuty finding remediation.
+Terraform/CloudFormation-based infrastructure provisioning.
+Managing multiple AWS accounts using AWS Organizations and Control Tower.
+Cost optimization and security remediation.
+For example, I worked on automating security-group remediation using EventBridge, Lambda, and SNS, where an event triggered Lambda and the required remediation/notification was performed automatically.
+--------------------------------------------------------------------------------
+2. How would you configure a service availability/service-down alert in a monitoring platform?
+Answer:
+First, I define what "service down" means. It could be:
+Service process is stopped.
+Application endpoint is not responding.
+HTTP status is not 200.
+Kubernetes pod is unavailable.
+EC2 instance is unhealthy.
+Load balancer target is unhealthy.
+For example, for an application running on Linux, I can monitor the process using an exporter or monitoring agent and create an alert when the process is unavailable.
+For an HTTP application, I prefer monitoring the actual endpoint because a running process doesn't necessarily mean the application is healthy.
+For example:
+Application endpoint
+
+    ↓
+
+Monitoring system
+    ↓
+
+Metric/health check
+    ↓
+
+Alert rule
+    ↓
+
+SNS/Email/Teams/PagerDuty
+    ↓
+
+On-call engineer
+I would also configure a threshold and evaluation period to avoid false alerts. For example, trigger the alert only if the service remains unavailable for 2–5 minutes.
+--------------------------------------------------------------------------------
+3. Which monitoring and observability tools have you used?
+Answer:
+I have worked with CloudWatch, Prometheus, Grafana, CloudWatch Logs, Security Hub, and AWS monitoring services.
+My responsibilities included:
+Creating CloudWatch alarms.
+Monitoring EC2, RDS, ALB and application metrics.
+Creating dashboards.
+Monitoring CPU, memory, disk, network and application health.
+Centralizing and analyzing logs.
+Creating Prometheus scrape configurations.
+Creating Grafana dashboards.
+Monitoring Kubernetes/EKS workloads.
+Investigating alerts and performing root-cause analysis.
+I have also worked with Node Exporter and cAdvisor for infrastructure and container monitoring.
+In production, my approach is generally:
+Metrics → Alert → Dashboard → Logs → Root Cause Analysis → Remediation → Preventive Action
+--------------------------------------------------------------------------------
+4. Explain the CI/CD pipelines you built using GitHub Actions.
+Answer:
+I have worked with GitHub Actions to automate build, test, containerization, security checks and deployment.
+A typical pipeline I have worked with looks like:
+Developer Push/PR
+
+   ↓
+
+Checkout Code
+   ↓
+
+Lint / Code Validation
+   ↓
+
+Unit Tests
+   ↓
+
+Build Application
+   ↓
+
+Docker Build
+   ↓
+
+Security Scan
+   ↓
+
+Push Image to ECR
+   ↓
+
+Deploy to Kubernetes/EKS
+   ↓
+
+Health Check
+   ↓
+
+Notification
+Typical GitHub Actions components include:
+checkout
+AWS credential configuration
+Docker build
+Docker login
+ECR push
+Kubernetes deployment
+Environment-specific configuration
+Secrets management
+Approval gates
+I also use GitHub Secrets or environment-level secrets rather than hardcoding credentials.
+For production deployments, I prefer controlled deployment strategies such as rolling deployment or blue-green/canary deployment, depending on the application requirements.
+--------------------------------------------------------------------------------
+5. What is a Pod Disruption Budget (PDB), and why is it important?
+Answer:
+A Pod Disruption Budget defines how many replicas of an application must remain available during voluntary disruptions.
+For example, if I have:
+replicas: 5
+
+I can configure:
+minAvailable: 4
+
+This means Kubernetes should maintain at least 4 pods available during voluntary disruptions.
+PDB is particularly important during:
+Node draining
+EKS node upgrades
+Cluster maintenance
+Cluster autoscaling
+Kubernetes upgrades
+It helps prevent too many application pods from being unavailable at the same time.
+One important point is that PDB mainly protects against voluntary disruptions. It does not guarantee availability if a node suddenly crashes.
+--------------------------------------------------------------------------------
+6. What are the key components of an ECS Task Definition?
+Answer:
+An ECS Task Definition is essentially a blueprint describing how containers should run.
+Important configurations include:
+Family name
+Task revision
+Task execution role
+Task role
+Network mode
+CPU
+Memory
+Container definitions
+Container image
+Port mappings
+Environment variables
+Secrets
+Logging configuration
+Health checks
+Volumes
+Mount points
+Container dependencies
+Linux parameters
+Resource limits
+For example, for an application container I would define:
+Container Image
+
+CPU/Memory
+Port
+Environment variables
+Secrets
+CloudWatch logging
+Health check
+IAM role
+The ECS Service then uses this task definition to maintain the desired number of running tasks.
+--------------------------------------------------------------------------------
+7. How would you compare Amazon ECS and Amazon EKS?
+Answer:
+The main difference is that ECS is AWS's native container orchestration service, whereas EKS is managed Kubernetes.
+ECSEKSAWS-nativeKubernetesSimpler to operateMore flexibleEasier learning curveMore complexStrong AWS integrationLarge Kubernetes ecosystemLess Kubernetes administrationKubernetes-basedGood for AWS-centric applicationsGood for Kubernetes/multi-cloud environments
+I would choose ECS when the organization wants simpler AWS-native container orchestration.
+I would choose EKS when the organization requires Kubernetes capabilities, portability, Helm, Kubernetes operators, custom controllers, or an existing Kubernetes ecosystem.
+--------------------------------------------------------------------------------
+8. Describe your EKS cluster deployment and upgrade experience.
+Answer:
+For EKS upgrades, I follow a controlled and incremental approach.
+Before upgrading I check:
+Current Kubernetes version.
+EKS supported upgrade path.
+Kubernetes API deprecations.
+Workload compatibility.
+Add-on compatibility.
+AWS Load Balancer Controller compatibility.
+CoreDNS version.
+kube-proxy version.
+VPC CNI version.
+Node group compatibility.
+PDB configuration.
+My upgrade process is generally:
+Backup / Validate
+
+  ↓
+
+Review deprecated APIs
+  ↓
+
+Test in lower environment
+  ↓
+
+Upgrade control plane
+  ↓
+
+Upgrade add-ons
+  ↓
+
+Upgrade worker nodes
+  ↓
+
+Drain nodes safely
+  ↓
+
+Validate workloads
+  ↓
+
+Monitor application
+I don't directly perform a production upgrade without validation. I prefer lower environment → staging → production.
+--------------------------------------------------------------------------------
+9. What is your experience with AWS Load Balancers such as ALB and NLB?
+Answer:
+I have worked with both ALB and NLB.
+ALB
+ALB works at Layer 7 and is suitable for HTTP/HTTPS applications.
+It supports:
+Host-based routing
+Path-based routing
+HTTP/HTTPS
+TLS termination
+Target groups
+Health checks
+WebSocket applications
+Example:
+example.com/api → API target group
+
+example.com/web → Web target group
+NLB
+NLB operates primarily at Layer 4 and is suitable when high performance, low latency and TCP/UDP traffic are required.
+I would generally use:
+ALB → HTTP/HTTPS applications
+NLB → TCP/UDP or high-performance networking requirements
+--------------------------------------------------------------------------------
+10. Have you implemented AWS Load Balancer Controller or other Ingress Controllers in EKS?
+Answer:
+Yes. The AWS Load Balancer Controller is used in EKS to provision and manage AWS load balancers based on Kubernetes resources.
+For an ALB, I configure an Ingress resource with annotations such as:
+apiVersion: networking.k8s.io/v1
+
+kind: Ingress
+metadata:
+name: application-ingress
+annotations:
+alb.ingress.kubernetes.io/scheme: internet-facing
+
+alb.ingress.kubernetes.io/target-type: ip
+
+alb.ingress.kubernetes.io/listen-ports: '\[{"HTTP":80},{"HTTPS":443}\]'
+
+spec:
+ingressClassName: alb
+Important configurations include:
+IAM permissions.
+OIDC/IRSA.
+VPC/subnet configuration.
+Security groups.
+IngressClass.
+Target type.
+Listener configuration.
+TLS certificate/ACM.
+Health checks.
+Routing rules.
+I also validate the controller logs and Kubernetes events when troubleshooting.
+--------------------------------------------------------------------------------
+11. What Azure services and Azure DevOps features have you worked with?
+Answer:
+I have worked with Azure concepts and services such as:
+Azure Virtual Machines
+Azure Load Balancer
+Application Gateway
+Azure Storage
+Azure Monitor
+Azure DevOps
+Azure Repositories
+Azure Pipelines
+Azure Artifacts
+Azure Boards
+In Azure DevOps, I have worked with CI/CD pipelines involving:
+Code Commit
+
+↓
+
+Build
+↓
+
+Test
+↓
+
+Artifact
+↓
+
+Deployment
+↓
+
+Validation
+I also understand the difference between Azure Load Balancer, which works mainly at Layer 4, and Application Gateway, which provides Layer 7 capabilities such as HTTP routing and WAF integration.
+--------------------------------------------------------------------------------
+12. What information would you collect before provisioning EC2 and RDS?
+Answer:
+Before provisioning infrastructure, I first understand the application's requirements.
+EC2
+I would collect:
+Region
+Availability Zone
+Instance type
+CPU/memory requirements
+AMI
+VPC
+Subnet
+Security groups
+IAM role
+Storage requirements
+Encryption
+Backup requirements
+Monitoring
+Auto Scaling requirements
+Load balancer requirements
+OS requirements
+Application ports
+RDS
+I would collect:
+Database engine
+Version
+Instance class
+Storage size
+Storage type
+Multi-AZ requirement
+Backup retention
+Maintenance window
+Security groups
+Subnet group
+Encryption
+Parameter group
+Performance requirements
+Read replica requirement
+Recovery requirements
+I also check availability, security, cost and scalability before provisioning.
+--------------------------------------------------------------------------------
+13. What AWS security best practices do you implement?
+Answer:
+My key security practices include:
+IAM
+Least privilege.
+IAM roles instead of hardcoded access keys.
+MFA where applicable.
+Regular access review.
+Avoid using root credentials.
+Network
+Private subnets for databases.
+Restrictive security groups.
+Avoid 0.0.0.0/0 unless absolutely required.
+Network segmentation.
+Controlled inbound/outbound traffic.
+Data
+Encryption at rest.
+TLS encryption in transit.
+S3 Block Public Access.
+Proper bucket policies.
+KMS where required.
+Monitoring
+I use services such as:
+Security Hub
+GuardDuty
+CloudTrail
+AWS Config
+Inspector
+I also regularly review security findings and remediate them.
+For example, I have worked on S3 public-access remediation and security-group open-port remediation.
+--------------------------------------------------------------------------------
+14. How do you perform Kubernetes/EKS upgrades while minimizing downtime?
+Answer:
+I use a rolling and controlled upgrade strategy.
+First, I ensure the application has multiple replicas:
+replicas: 3
+
+Then I configure appropriate:
+Readiness probes
+Liveness probes
+Pod Disruption Budget
+RollingUpdate strategy
+Resource requests/limits
+Multiple Availability Zones
+During node upgrades:
+New Node
+
+↓
+Schedule workloads
+↓
+Validate application
+↓
+Drain old node
+↓
+Terminate old node
+I make sure the application remains available while nodes are being replaced.
+For critical applications, I may use blue-green or canary deployment.
+--------------------------------------------------------------------------------
+15. What is your experience with Terraform and Python automation?
+Answer:
+I have used Terraform extensively for Infrastructure as Code.
+I have worked with:
+Variables
+Outputs
+Locals
+Modules
+Data sources
+for_each
+count
+Dynamic blocks
+Providers
+Provider aliases
+Remote state
+State locking
+Terraform workspaces
+Multiple AWS accounts
+I have also used Python, particularly boto3, for AWS automation.
+For example, automation can be used to:
+Find non-compliant resources.
+Retrieve IAM information.
+Identify unencrypted resources.
+Automate security remediation.
+Process AWS inventory.
+Generate reports.
+A typical automation approach is:
+Python/Boto3
+
+ ↓
+
+Discover AWS resources
+ ↓
+
+Evaluate condition
+ ↓
+
+Take remediation action
+ ↓
+
+Log result
+ ↓
+
+Send notification
+--------------------------------------------------------------------------------
+16. Can you describe your experience working with databases?
+Answer:
+My primary role around databases has been from the infrastructure and DevOps perspective rather than being a dedicated DBA.
+I have worked with AWS database environments, particularly RDS, and have been involved in:
+Provisioning.
+Monitoring.
+Backup and restore.
+Security groups.
+Connectivity troubleshooting.
+Performance monitoring.
+Storage monitoring.
+High availability.
+Maintenance.
+Snapshot management.
+For database incidents, I typically start with:
+Application
+
+↓
+
+Connectivity
+↓
+
+Security Group
+↓
+
+Network/Subnet
+↓
+
+Database status
+↓
+
+CPU/Memory/Storage
+↓
+
+Database logs
+--------------------------------------------------------------------------------
+17. Which relational and NoSQL databases have you worked with?
+Answer:
+From the AWS/DevOps perspective, I have primarily worked with relational databases such as:
+MySQL
+PostgreSQL
+Amazon RDS
+For NoSQL, I have knowledge and exposure to:
+DynamoDB
+Amazon DocumentDB
+My focus has generally been infrastructure provisioning, monitoring, availability, backup/recovery, security and application connectivity rather than deep database administration.
+Important: If you have not actually worked hands-on with a particular database, say "I have knowledge/exposure" rather than claiming production experience.
+--------------------------------------------------------------------------------
+18. What database-related activities have you been involved in?
+Answer:
+My database-related responsibilities have included:
+RDS provisioning.
+Instance sizing.
+Security-group configuration.
+Subnet-group configuration.
+Encryption.
+Backup configuration.
+Snapshot creation.
+Restore testing.
+Monitoring CPU, memory and storage.
+Monitoring database connections.
+Troubleshooting connectivity.
+Checking database logs.
+Supporting application teams during incidents.
+Maintenance and upgrade coordination.
+I also consider RPO and RTO while designing backup and recovery solutions.
+--------------------------------------------------------------------------------
+19. What is Amazon DocumentDB and when would you recommend it?
+Answer:
+Amazon DocumentDB is a managed document database service designed to be compatible with MongoDB workloads.
+It stores data in a document-oriented model, typically using JSON-like documents.
+I would consider DocumentDB when:
+The application uses a document data model.
+MongoDB compatibility is required.
+The organization wants a managed AWS database.
+High availability and scalability are required.
+The application doesn't require features that are unsupported by DocumentDB.
+I would not automatically choose DocumentDB just because the application uses MongoDB. I would first verify MongoDB compatibility, supported features, performance requirements and application dependencies.
+--------------------------------------------------------------------------------
+20. What backup and recovery solutions have you worked with in AWS?
+Answer:
+I have worked with AWS backup and recovery mechanisms such as:
+RDS automated backups.
+RDS snapshots.
+EBS snapshots.
+AMIs.
+S3 versioning.
+S3 lifecycle policies.
+AWS Backup.
+Cross-region backup strategies where required.
+For critical applications, I consider:
+RPO – Recovery Point Objective
+How much data loss is acceptable?
+RTO – Recovery Time Objective
+How quickly does the application need to be restored?
+For example:
+Production RDS
+
+  ↓
+
+Automated Backup
+  ↓
+
+Snapshot
+  ↓
+
+Cross-region / AWS Backup
+  ↓
+
+Restore
+  ↓
+
+Application Validation
+--------------------------------------------------------------------------------
+21. Have you performed backup restoration? Explain the process and challenges.
+Answer:
+Yes. I have worked with backup/snapshot restoration from an infrastructure perspective.
+For example, for an RDS restore, my process would be:
+Step 1 – Identify the recovery point
+I select the appropriate:
+Automated backup
+Snapshot
+Point-in-time recovery point
+Step 2 – Restore
+I restore the database into the required environment.
+Step 3 – Configure networking
+I validate:
+VPC
+Subnet group
+Security groups
+Route configuration
+DNS/connectivity
+Step 4 – Validate database
+I check:
+Database status
+Connectivity
+Database logs
+Data availability
+Application connectivity
+Step 5 – Application validation
+I coordinate with the application team to validate the application.
+Step 6 – Production cutover
+If required, I update the application configuration/DNS/endpoint and perform the controlled cutover.
+Common challenges
+The common challenges can include:
+Restore taking longer than expected.
+Incorrect security-group configuration.
+Application unable to connect.
+DNS/endpoint changes.
+Database version compatibility.
+Insufficient storage.
+Missing parameter configurations.
+Differences between source and restored environments.
+I always recommend periodic restore testing, because having a backup is not enough; we need to verify that the backup can actually be restored successfully.
+--------------------------------------------------------------------------------
+⭐ Important: How to answer like a 6-year candidate
+For your experience level, don't answer only with definitions.
+Use this structure:
+1. What it is → 2. What you used → 3. How you implemented it → 4. Troubleshooting → 5. Production impact
+For example, don't just say:
+> "PDB maintains pod availability."
+Instead say:
+> "PDB controls how many pods can be voluntarily disrupted at a time. I use it especially during EKS node maintenance and upgrades. For example, if an application has five replicas, I can configure a minimum of four available pods. Before an upgrade I also verify PDBs, readiness probes and replica distribution so that draining a node doesn't cause application downtime."
+That sounds much more like a 6-year DevOps/CloudOps engineer.
+A few follow-up questions you should especially prepare
+For this interview, I would be ready for deeper questions around:
+EKS upgrade step-by-step
+EKS troubleshooting
+ALB vs NLB
+AWS Load Balancer Controller
+Terraform modules and state
+Terraform for_each vs count
+GitHub Actions pipeline troubleshooting
+Kubernetes pod troubleshooting
+PDB + node drain
+RDS backup/restore
+CloudWatch/Prometheus/Grafana
+AWS security remediation
+IAM and least privilege
+VPC/subnet/security-group troubleshooting
+Real production incident scenarios
+Given your AWS/CloudOps background, these are likely to be more important than simply memorizing definitions

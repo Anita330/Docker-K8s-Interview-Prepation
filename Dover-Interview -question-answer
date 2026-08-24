@@ -634,3 +634,25 @@ IAM and least privilege
 VPC/subnet/security-group troubleshooting
 Real production incident scenarios
 Given your AWS/CloudOps background, these are likely to be more important than simply memorizing definitions
+
+Explain architecture of Kubernetes and its components?
+What are various Deployment Strategies are there in Kubernetes ? What Deployment Strategy Do You Follow in Your Organization ?
+What is difference between deployment, statulfulset and deamonset in Kubernetes ?
+What are the services available in Kubernetes ?
+Difference Between Liveness and Readiness Probes in Kubernetes
+What is a Pod Disruption Budget (PDB), and why is it important in Kubernetes?
+How do you perform Kubernetes/AKS upgrades while minimizing application downtime?
+How would you compare Amazon ECS and Amazon EKS?
+Have you deploy Nginx Ingress controller in Kubernetes ? If Yes, what are parameters or configuration are there in which we have to write in Kubernetes manifest file ?
+How would you perform a deployment rollback in Kubernetes? Please explain the different approaches using kubectl, Helm, and Argo CD.
+ 
+Devops, Terraform, monitoring and observability, Database Interview Questions:-
+ 
+What is your experience with Infrastructure as Code (Terraform) and automation using Python?
+Can you explain the CI/CD pipelines you have built using Azure Devops or GitHub Actions, including the stages involved?
+In AWS what all services are there for CICD, explain the use of each ?
+what is terraform lifecycle ? 
+Can we configure or integrate Azure Devops with AWS Code Deploy service ?
+How would you configure a service availability (service-down) alert in a monitoring platform?
+Which relational and NoSQL databases have you worked with?
+What database-related activities have you been involved in ?
